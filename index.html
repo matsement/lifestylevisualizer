@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lifestyle Visualizer — Interactive Body Scenario Simulator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Lifestyle Visualizer</h1>
+    <p class="tagline">Playful, educational visual scenarios. Not medical advice.</p>
+  </header>
+
+  <main class="container">
+    <section class="controls" aria-label="Inputs and scenarios">
+      <h2>Inputs</h2>
+
+      <div class="row">
+        <label>Height (cm)
+          <input id="height" type="number" min="100" max="230" value="175">
+        </label>
+        <label>Weight (kg)
+          <input id="weight" type="number" min="30" max="200" value="80">
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Gender (optional)
+          <select id="gender">
+            <option value="neutral">Neutral</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </label>
+
+        <label>Activity level
+          <select id="activity">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      </div>
+
+      <h3>Scenarios</h3>
+
+      <label>Intermittent fasting
+        <input id="ifasting" type="checkbox">
+        <input id="ifastingIntensity" type="range" min="0" max="100" value="30">
+      </label>
+
+      <label>Sugar restriction
+        <select id="sugar">
+          <option value="none">None</option>
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="strict">Strict</option>
+        </select>
+      </label>
+
+      <label>Sport days / week
+        <input id="sportDays" type="range" min="0" max="7" value="2">
+        <span id="sportDaysVal">2</span>
+      </label>
+
+      <label>Discipline (0–100)
+        <input id="discipline" type="range" min="0" max="100" value="50">
+        <span id="disciplineVal">50</span>
+      </label>
+
+      <div class="row buttons">
+        <button data-weeks="0" class="scenario active">Week 0</button>
+        <button data-weeks="4" class="scenario">Week 4</button>
+        <button data-weeks="8" class="scenario">Week 8</button>
+        <button data-weeks="12" class="scenario">Week 12</button>
+      </div>
+
+      <div class="row small-actions">
+        <button id="compare">Compare Now / Scenario</button>
+        <button id="reset">Reset</button>
+        <button id="randomize">Random Lifestyle</button>
+        <button id="export">Export PNG</button>
+      </div>
+
+      <section class="notes">
+        <strong>Note:</strong> This tool shows playful scenario visualizations and archetypes (lean / average / athletic / stocky). It is not medical advice.
+      </section>
+    </section>
+
+    <section class="visual" aria-label="Visualization">
+      <h2>Visualization</h2>
+
+      <div class="viz-stage">
+        <div class="legend">
+          <div><span class="swatch lean"></span>Lean</div>
+          <div><span class="swatch average"></span>Average</div>
+          <div><span class="swatch athletic"></span>Athletic</div>
+          <div><span class="swatch stocky"></span>Stocky</div>
+        </div>
+
+        <div class="avatars">
+          <div class="avatar-wrapper">
+            <svg id="avatarNow" viewBox="0 0 200 300" width="300" height="450" aria-label="Current body">
+              <!-- background torso group -->
+              <g id="bodyGroupNow" transform="translate(100,150)">
+                <ellipse id="torsoNow" cx="0" cy="20" rx="32" ry="60" fill="#f2c" />
+                <rect id="neckNow" x="-8" y="-40" width="16" height="20" rx="6" fill="#f2c" />
+                <circle id="headNow" cx="0" cy="-60" r="20" fill="#ffd7c2" />
+              </g>
+            </svg>
+            <div class="caption">Now</div>
+          </div>
+
+          <div class="avatar-wrapper">
+            <svg id="avatarFuture" viewBox="0 0 200 300" width="300" height="450" aria-label="Scenario body">
+              <g id="bodyGroupFuture" transform="translate(100,150)">
+                <ellipse id="torsoFuture" cx="0" cy="20" rx="32" ry="60" fill="#8cf" />
+                <rect id="neckFuture" x="-8" y="-40" width="16" height="20" rx="6" fill="#8cf" />
+                <circle id="headFuture" cx="0" cy="-60" r="20" fill="#ffd7c2" />
+              </g>
+            </svg>
+            <div class="caption" id="futureLabel">Scenario</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div>Current BMI: <span id="bmiNow">—</span></div>
+        <div>Scenario weight: <span id="weightFuture">—</span> kg</div>
+        <div>Archetype: <span id="archetype">—</span></div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer>
+    <small>Created for playful educational scenarios. No medical claims. Ready for GitHub Pages.</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
