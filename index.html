@@ -3,18 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lifestyle Visualizer — Interactive Body Scenario Simulator</title>
+  <title>Lifestyle Visualizer — Personal Goal Simulator</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
     <h1>Lifestyle Visualizer</h1>
-    <p class="tagline">Playful, educational visual scenarios. Not medical advice.</p>
+    <p class="tagline">Personal, science-informed scenario previews — educational only, not medical advice.</p>
   </header>
 
   <main class="container">
     <section class="controls" aria-label="Inputs and scenarios">
-      <h2>Inputs</h2>
+      <h2>Your profile</h2>
+
+      <div class="row">
+        <label>First name (optional)
+          <input id="name" type="text" placeholder="Alex">
+        </label>
+        <label>Gender (optional)
+          <select id="gender">
+            <option value="neutral">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </label>
+      </div>
 
       <div class="row">
         <label>Height (cm)
@@ -25,117 +38,119 @@
         </label>
       </div>
 
-      <div class="row">
-        <label>Gender (optional)
-          <select id="gender">
-            <option value="neutral">Neutral</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-        </label>
+      <h3>Daily habits (fill for best results)</h3>
 
-        <label>Activity level
-          <select id="activity">
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
-          </select>
-        </label>
-      </div>
-
-      <h3>Scenarios</h3>
-
-      <label>Intermittent fasting
-        <input id="ifasting" type="checkbox">
-        <input id="ifastingIntensity" type="range" min="0" max="100" value="30">
+      <label>Daily steps
+        <input id="steps" type="number" min="0" max="50000" value="4000">
       </label>
 
-      <label>Sugar restriction
-        <select id="sugar">
-          <option value="none">None</option>
-          <option value="low">Low</option>
-          <option value="medium" selected>Medium</option>
-          <option value="strict">Strict</option>
-        </select>
+      <label>Sleep per night (hours)
+        <input id="sleep" type="number" min="0" max="14" step="0.5" value="7">
       </label>
 
-      <label>Sport days / week
+      <label>Water per day (litres)
+        <input id="water" type="number" min="0" max="10" step="0.1" value="2">
+      </label>
+
+      <label>Sport / workouts per week
         <input id="sportDays" type="range" min="0" max="7" value="2">
         <span id="sportDaysVal">2</span>
       </label>
 
-      <label>Discipline (0–100)
-        <input id="discipline" type="range" min="0" max="100" value="50">
-        <span id="disciplineVal">50</span>
+      <label>Diet choice
+        <select id="dietPlan">
+          <option value="maintain">No major change (maintain)</option>
+          <option value="moderate_loss">Moderate deficit (safe weight loss)</option>
+          <option value="aggressive_loss">Aggressive deficit (faster loss)</option>
+          <option value="build_muscle">Calorie + protein for muscle gain</option>
+          <option value="balanced_wellness">Balanced healthy habits</option>
+        </select>
       </label>
 
+      <label>Sugar habits
+        <select id="sugar">
+          <option value="nochange">No change</option>
+          <option value="less_drinks">Reduce sugary drinks</option>
+          <option value="cut_sweets">Cut most sweets/snacks</option>
+          <option value="lowadded">Very low added sugar</option>
+        </select>
+      </label>
+
+      <h3>Scenarios</h3>
       <div class="row buttons">
-        <button data-weeks="0" class="scenario active">Week 0</button>
-        <button data-weeks="4" class="scenario">Week 4</button>
-        <button data-weeks="8" class="scenario">Week 8</button>
-        <button data-weeks="12" class="scenario">Week 12</button>
+        <button data-weeks="0" class="scenario active">Now</button>
+        <button data-weeks="4" class="scenario">4 weeks</button>
+        <button data-weeks="12" class="scenario">12 weeks</button>
+        <button data-weeks="24" class="scenario">24 weeks</button>
       </div>
 
       <div class="row small-actions">
         <button id="compare">Compare Now / Scenario</button>
         <button id="reset">Reset</button>
-        <button id="randomize">Random Lifestyle</button>
+        <button id="randomize">Randomize</button>
         <button id="export">Export PNG</button>
       </div>
 
       <section class="notes">
-        <strong>Note:</strong> This tool shows playful scenario visualizations and archetypes (lean / average / athletic / stocky). It is not medical advice.
+        <strong>Tip:</strong> For the most personal, realistic preview, please fill in daily steps, sleep and water. The images are central — add up to 20 images per gender in images/male/1.jpg .. images/male/20.jpg and images/female/1.jpg .. images/female/20.jpg. If images are missing the app will fall back to a simple illustration.
       </section>
     </section>
 
     <section class="visual" aria-label="Visualization">
-      <h2>Visualization</h2>
+      <div class="greeting">Hello <span id="greetName">there</span> — here's how your scenario could look.</div>
 
       <div class="viz-stage">
-        <div class="legend">
-          <div><span class="swatch lean"></span>Lean</div>
-          <div><span class="swatch average"></span>Average</div>
-          <div><span class="swatch athletic"></span>Athletic</div>
-          <div><span class="swatch stocky"></span>Stocky</div>
-        </div>
-
-        <div class="avatars">
-          <div class="avatar-wrapper">
-            <svg id="avatarNow" viewBox="0 0 200 300" width="300" height="450" aria-label="Current body">
-              <!-- background torso group -->
+        <div class="avatar-wrapper">
+          <div class="avatar-media" id="nowMedia">
+            <img id="avatarNowImg" alt="Current body image" crossorigin="anonymous">
+            <svg id="avatarNowSVG" viewBox="0 0 200 300" width="300" height="450" aria-hidden="true">
               <g id="bodyGroupNow" transform="translate(100,150)">
-                <ellipse id="torsoNow" cx="0" cy="20" rx="32" ry="60" fill="#f2c" />
-                <rect id="neckNow" x="-8" y="-40" width="16" height="20" rx="6" fill="#f2c" />
+                <ellipse id="torsoNow" cx="0" cy="20" rx="32" ry="60" fill="#d1b3ff" />
+                <rect id="neckNow" x="-8" y="-40" width="16" height="20" rx="6" fill="#eecfb5" />
                 <circle id="headNow" cx="0" cy="-60" r="20" fill="#ffd7c2" />
               </g>
             </svg>
-            <div class="caption">Now</div>
           </div>
+          <div class="caption">Now</div>
+        </div>
 
-          <div class="avatar-wrapper">
-            <svg id="avatarFuture" viewBox="0 0 200 300" width="300" height="450" aria-label="Scenario body">
+        <div class="avatar-wrapper">
+          <div class="avatar-media" id="futureMedia">
+            <img id="avatarFutureImg" alt="Scenario body image" crossorigin="anonymous">
+            <svg id="avatarFutureSVG" viewBox="0 0 200 300" width="300" height="450" aria-hidden="true">
               <g id="bodyGroupFuture" transform="translate(100,150)">
-                <ellipse id="torsoFuture" cx="0" cy="20" rx="32" ry="60" fill="#8cf" />
-                <rect id="neckFuture" x="-8" y="-40" width="16" height="20" rx="6" fill="#8cf" />
+                <ellipse id="torsoFuture" cx="0" cy="20" rx="32" ry="60" fill="#bfe8ff" />
+                <rect id="neckFuture" x="-8" y="-40" width="16" height="20" rx="6" fill="#eecfb5" />
                 <circle id="headFuture" cx="0" cy="-60" r="20" fill="#ffd7c2" />
               </g>
             </svg>
-            <div class="caption" id="futureLabel">Scenario</div>
           </div>
+          <div class="caption" id="futureLabel">Scenario</div>
         </div>
-      </div>
 
-      <div class="metrics">
-        <div>Current BMI: <span id="bmiNow">—</span></div>
-        <div>Scenario weight: <span id="weightFuture">—</span> kg</div>
-        <div>Archetype: <span id="archetype">—</span></div>
+        <aside class="bmi-panel">
+          <div class="bmi-value">BMI: <strong id="bmiNow">—</strong></div>
+          <div class="bmi-bar" aria-hidden="true">
+            <div class="bmi-seg under">Underweight<br><span class="range">&lt;18.5</span></div>
+            <div class="bmi-seg normal">Normal<br><span class="range">18.5–24.9</span></div>
+            <div class="bmi-seg over">Overweight<br><span class="range">25–29.9</span></div>
+            <div class="bmi-seg obese">Obese<br><span class="range">≥30</span></div>
+            <div id="bmiMarker" title="Your BMI"></div>
+          </div>
+          <div class="bmi-text" id="bmiInterpret">Fill more fields for a better personalized preview.</div>
+          <div class="scenario-metrics">
+            <div>Current weight: <span id="weightNow">—</span> kg</div>
+            <div>Scenario weight: <span id="weightFuture">—</span> kg</div>
+            <div>Weekly change estimate: <span id="weeklyPct">—</span></div>
+          </div>
+        </aside>
       </div>
 
     </section>
   </main>
 
   <footer>
-    <small>Created for playful educational scenarios. No medical claims. Ready for GitHub Pages.</small>
+    <small>Created for educational scenarios. Not medical advice. Personalize your inputs for the best preview.</small>
   </footer>
 
   <script src="script.js"></script>
