@@ -1,28 +1,33 @@
-// script.js - visualization and simple scenario engine
+// script.js - enhanced visualization and scenario engine
 const qs = s => document.querySelector(s);
 const get = id => qs('#'+id);
 
 // inputs
+const nameEl = get('name');
 const heightEl = get('height');
 const weightEl = get('weight');
 const genderEl = get('gender');
-const activityEl = get('activity');
-const ifastingEl = get('ifasting');
-const ifastingIntensityEl = get('ifastingIntensity');
-const sugarEl = get('sugar');
+const stepsEl = get('steps');
+const sleepEl = get('sleep');
+const waterEl = get('water');
 const sportDaysEl = get('sportDays');
 const sportDaysVal = get('sportDaysVal');
-const disciplineEl = get('discipline');
-const disciplineVal = get('disciplineVal');
+const dietPlanEl = get('dietPlan');
+const sugarEl = get('sugar');
 
 const scenarioButtons = document.querySelectorAll('.scenario');
-const avatarNow = qs('#avatarNow');
-const avatarFuture = qs('#avatarFuture');
+const avatarNowImg = get('avatarNowImg');
+const avatarFutureImg = get('avatarFutureImg');
+const avatarNowSVG = qs('#avatarNowSVG');
+const avatarFutureSVG = qs('#avatarFutureSVG');
 const torsoNow = qs('#torsoNow');
 const torsoFuture = qs('#torsoFuture');
 const bmiNow = get('bmiNow');
+const bmiInterpret = get('bmiInterpret');
+const weightNowEl = get('weightNow');
 const weightFutureEl = get('weightFuture');
-const archetypeEl = get('archetype');
+const weeklyPctEl = get('weeklyPct');
+const greetName = get('greetName');
 const futureLabel = get('futureLabel');
 
 const compareBtn = get('compare');
@@ -32,26 +37,27 @@ const exportBtn = get('export');
 
 let currentWeeks = 0;
 let compareMode = false;
+const IMAGE_COUNT = 20; // expects up to 20 per gender
 
 function init(){
   attachEvents();
+  loadAvatarImages();
   updateAll();
 }
 
 function attachEvents(){
-  [heightEl, weightEl, genderEl, activityEl, ifastingEl, ifastingIntensityEl, sugarEl, sportDaysEl, disciplineEl].forEach(el=>{
+  [nameEl, heightEl, weightEl, genderEl, stepsEl, sleepEl, waterEl, sportDaysEl, dietPlanEl, sugarEl].forEach(el=>{
     el.addEventListener('input', ()=>{ updateAll(); });
     el.addEventListener('change', ()=>{ updateAll(); });
   });
 
   sportDaysEl.addEventListener('input', ()=>{ sportDaysVal.textContent = sportDaysEl.value });
-  disciplineEl.addEventListener('input', ()=>{ disciplineVal.textContent = disciplineEl.value });
 
   scenarioButtons.forEach(btn=>btn.addEventListener('click', ()=>{
     scenarioButtons.forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     currentWeeks = parseInt(btn.dataset.weeks,10);
-    futureLabel.textContent = `Week ${currentWeeks}`;
+    futureLabel.textContent = btn.textContent;
     animateToScenario();
   }));
 
@@ -61,179 +67,263 @@ function attachEvents(){
   exportBtn.addEventListener('click', exportPNG);
 }
 
-function updateAll(){
-  const state = readInputs();
-  renderNow(state);
-  renderFuture(state, currentWeeks);
-}
-
 function readInputs(){
   return {
+    name: nameEl.value || '',
     height: Number(heightEl.value),
     weight: Number(weightEl.value),
     gender: genderEl.value,
-    activity: activityEl.value,
-    ifasting: ifastingEl.checked,
-    ifastingIntensity: Number(ifastingIntensityEl.value)/100,
-    sugar: sugarEl.value,
+    steps: Number(stepsEl.value),
+    sleep: Number(sleepEl.value),
+    water: Number(waterEl.value),
     sportDays: Number(sportDaysEl.value),
-    discipline: Number(disciplineEl.value)/100
+    dietPlan: dietPlanEl.value,
+    sugar: sugarEl.value
   }
 }
 
-// Simple scenario engine: computes weight change over weeks based on heuristics
+// A compact, science-inspired heuristic to estimate weekly weight change (very approximate)
 function computeFutureWeight(state, weeks){
-  // baseline metabolic factor by activity
-  const activityFactor = state.activity === 'high' ? 1.05 : state.activity === 'low' ? 0.95 : 1.0;
+  // Baseline: assume maintenance when dietPlan=maintain and average activity
+  // Convert steps to extra calories: roughly 0.04 kcal per step for average person (very rough)
+  const stepCals = state.steps * 0.04; // e.g., 5000 steps -> 200 kcal/day
+  const weeklyStepCals = stepCals * 7;
 
-  // discipline and sport effect: more discipline and sport helps create calorie deficit
-  const disciplineEffect = (state.discipline - 0.5) * 0.4; // -0.2 .. +0.2
-  const sportEffect = (state.sportDays / 7 - 0.25) * 0.25; // roughly -0.062..+0.25
+  // Sleep: poor sleep reduces metabolic efficiency; treat 7-9h as optimal
+  const sleepFactor = (state.sleep >=7 && state.sleep <=9) ? 1 : (state.sleep < 5 ? 0.95 : 0.98);
 
-  // fasting and sugar
-  const fastingEffect = state.ifasting ? (0.05 * state.ifastingIntensity) : 0;
-  const sugarEffect = state.sugar === 'strict' ? 0.06 : state.sugar === 'medium' ? 0.02 : state.sugar === 'low' ? 0.035 : 0;
+  // Water: more water slightly helps satiety; small effect
+  const waterFactor = Math.max(0.95, Math.min(1.02, 1 + (state.water - 2) * 0.01));
 
-  // total weekly percent change heuristic (positive means weight gain)
-  // start with a mild tendency relative to discipline & activity
-  let weeklyPct = -disciplineEffect - sportEffect - fastingEffect - sugarEffect;
+  // Diet plan baseline weekly calorie delta
+  const dietMap = {
+    'maintain': 0,
+    'moderate_loss': -350, // ~0.35 kg/week (3500 kcal per 0.45kg is typical rule-of-thumb)
+    'aggressive_loss': -700, // ~0.7 kg/week
+    'build_muscle': +250,
+    'balanced_wellness': -150
+  };
+  let dailyDietDelta = (dietMap[state.dietPlan] || 0) / 7; // daily kcal
 
-  // activity slightly counteracts discipline if very high
-  weeklyPct *= activityFactor;
+  // Sugar reduction: modest calorie improvements
+  const sugarMap = {
+    'nochange': 0,
+    'less_drinks': -100,
+    'cut_sweets': -200,
+    'lowadded': -300
+  };
+  dailyDietDelta += (sugarMap[state.sugar] || 0) / 7;
 
-  // cap extreme values
-  weeklyPct = Math.max(-0.06, Math.min(0.06, weeklyPct));
+  // Sport days: add extra burn
+  const sportBurnPerSession = 300; // rough average
+  const sportWeeklyBurn = state.sportDays * sportBurnPerSession;
 
-  // weight progression exponential-ish: w_future = w_now * (1 + weeklyPct)^weeks
-  const futureWeight = state.weight * Math.pow(1 + weeklyPct, weeks);
-  return { futureWeight: Number(futureWeight.toFixed(1)), weeklyPct };
+  // Combine daily effects into weekly kcal delta
+  const weeklyDelta = (dailyDietDelta * 7) + weeklyStepCals + sportWeeklyBurn + ( (sleepFactor - 1) * 100 * 7 );
+  // waterFactor slightly scales effect
+  const adjustedWeeklyDelta = weeklyDelta * waterFactor;
+
+  // Convert kcal to kg: 7700 kcal ~ 1 kg (approx)
+  const weeklyKg = adjustedWeeklyDelta / 7700;
+  const futureWeight = state.weight + weeklyKg * weeks;
+
+  // small safety caps
+  const cappedFuture = Math.max(35, Math.min(220, Number(futureWeight.toFixed(1))));
+  return { futureWeight: cappedFuture, weeklyKg: Number((weeklyKg).toFixed(3)), weeklyKcal: Math.round(adjustedWeeklyDelta) };
 }
 
 function bmi(weight, heightCm){
   const h = heightCm/100;
-  return (weight/(h*h)).toFixed(1);
+  if(!h || h<=0) return null;
+  return Number((weight/(h*h)).toFixed(1));
 }
 
-function archetypeFromBMIandSport(bmiVal, sportDays){
-  // simple archetype mapping
-  if(bmiVal < 20 && sportDays>=3) return 'Lean / Athletic';
-  if(bmiVal >=20 && bmiVal < 24) return sportDays>=3? 'Athletic' : 'Average';
-  if(bmiVal >=24 && bmiVal < 28) return 'Average';
-  return 'Stocky';
+function bmiCategory(bmiVal){
+  if(bmiVal === null) return {cat:'Unknown', color:'gray'};
+  if(bmiVal < 18.5) return {cat:'Underweight', color:'var(--under)'};
+  if(bmiVal < 25) return {cat:'Normal', color:'var(--normal)'};
+  if(bmiVal < 30) return {cat:'Overweight', color:'var(--over)'};
+  return {cat:'Obese', color:'var(--obese)'};
 }
 
 function renderNow(state){
-  // update BMI
   const b = bmi(state.weight, state.height);
-  bmiNow.textContent = b;
+  bmiNow.textContent = b !== null ? b : '—';
+  weightNowEl.textContent = state.weight || '—';
+  greetName.textContent = state.name ? state.name : 'there';
 
-  // map to torso size
+  // show avatar image if available
+  setAvatarImage(avatarNowImg, state.gender, 'now');
+
+  // map to torso size on fallback SVG
   const torsoRx = mapRange(state.weight, 40, 140, 18, 46);
   const torsoRy = mapRange(state.weight, 40, 140, 36, 86);
+  if(torsoNow) { torsoNow.setAttribute('rx', torsoRx); torsoNow.setAttribute('ry', torsoRy); }
 
-  torsoNow.setAttribute('rx', torsoRx);
-  torsoNow.setAttribute('ry', torsoRy);
+  // BMI panel interpretation
+  const cat = bmiCategory(b);
+  bmiInterpret.textContent = b ? `${cat.cat} — ${interpretationText(cat.cat)}` : 'Fill in height and weight for personalized guidance.';
+  positionBMImarker(b);
 }
 
 function renderFuture(state, weeks){
   const res = computeFutureWeight(state, weeks);
   weightFutureEl.textContent = res.futureWeight;
-  const b = bmi(res.futureWeight, state.height);
-  archetypeEl.textContent = archetypeFromBMIandSport(Number(b), state.sportDays);
+  weeklyPctEl.textContent = res.weeklyKg !== undefined ? `${res.weeklyKg.toFixed(3)} kg/week (~${res.weeklyKcal} kcal/week)` : '—';
 
-  // visual mapping: change future torso
+  // update avatar: choose image that roughly matches gender and BMI
+  setAvatarImage(avatarFutureImg, state.gender, 'future', res.futureWeight);
+
+  const b = bmi(res.futureWeight, state.height);
+
+  // visual mapping for fallback
   const torsoRx = mapRange(res.futureWeight, 40, 140, 18, 46);
   const torsoRy = mapRange(res.futureWeight, 40, 140, 36, 86);
-
-  torsoFuture.setAttribute('rx', torsoRx);
-  torsoFuture.setAttribute('ry', torsoRy);
-
-  // color by archetype
-  const arche = archetypeFromBMIandSport(Number(b), state.sportDays);
-  let color = '#fbbf24';
-  if(arche.includes('Lean')) color = '#9ae6b4';
-  if(arche.includes('Athletic')) color = '#60a5fa';
-  if(arche.includes('Stocky')) color = '#fda4af';
-  torsoFuture.setAttribute('fill', color);
+  if(torsoFuture) { torsoFuture.setAttribute('rx', torsoRx); torsoFuture.setAttribute('ry', torsoRy); }
 }
 
-function animateToScenario(){
-  // use current input values
-  updateAll();
+function interpretationText(cat){
+  switch(cat){
+    case 'Underweight': return 'Consider consulting a professional to assess healthy weight gain.';
+    case 'Normal': return 'Your BMI sits in the typical healthy range for most adults.';
+    case 'Overweight': return 'A moderate, sustainable plan can move you toward the normal range.';
+    case 'Obese': return 'Consider seeking medical guidance; gradual changes are safer and effective.';
+    default: return '';
+  }
 }
+
+function positionBMImarker(bmiVal){
+  const marker = get('bmiMarker');
+  if(!marker) return;
+  if(!bmiVal){ marker.style.left = '2%'; marker.style.opacity = 0.4; return; }
+  // Map BMI 12..40 to 2%..98%
+  const t = (Math.max(12, Math.min(40, bmiVal)) - 12) / (40-12);
+  marker.style.left = (2 + t*96) + '%';
+  marker.style.opacity = 1;
+}
+
+function animateToScenario(){ updateAll(); }
 
 function toggleCompare(){
   if(compareMode){
-    // highlight differences (simple approach: reduce opacity of now)
-    avatarNow.style.opacity = 0.5;
-    avatarFuture.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
+    avatarNowImg.style.opacity = 0.5; avatarNowSVG.style.opacity = 0.5;
+    avatarFutureImg.style.boxShadow = '0 12px 40px rgba(20,40,80,0.15)';
   } else {
-    avatarNow.style.opacity = 1;
-    avatarFuture.style.boxShadow = 'none';
+    avatarNowImg.style.opacity = 1; avatarNowSVG.style.opacity = 1;
+    avatarFutureImg.style.boxShadow = 'none';
   }
 }
 
 function resetAll(){
-  // reset to defaults
-  heightEl.value = 175;
-  weightEl.value = 80;
-  genderEl.value = 'neutral';
-  activityEl.value = 'medium';
-  ifastingEl.checked = false; ifastingIntensityEl.value = 30;
-  sugarEl.value = 'medium';
-  sportDaysEl.value = 2; sportDaysVal.textContent = 2;
-  disciplineEl.value = 50; disciplineVal.textContent = 50;
-  scenarioButtons.forEach(b=>b.classList.remove('active'));
-  scenarioButtons[0].classList.add('active');
-  currentWeeks = 0;
-  futureLabel.textContent = 'Scenario';
-  compareMode = false; compareBtn.textContent = 'Compare Now / Scenario';
+  nameEl.value = '';
+  heightEl.value = 175; weightEl.value = 80; genderEl.value = 'neutral';
+  stepsEl.value = 4000; sleepEl.value = 7; waterEl.value = 2; sportDaysEl.value = 2; sportDaysVal.textContent = 2;
+  dietPlanEl.value = 'maintain'; sugarEl.value = 'nochange';
+  scenarioButtons.forEach(b=>b.classList.remove('active')); scenarioButtons[0].classList.add('active'); currentWeeks = 0; futureLabel.textContent = 'Scenario'; compareMode = false; compareBtn.textContent = 'Compare Now / Scenario';
   updateAll();
 }
 
 function randomize(){
-  // mild randomization
-  heightEl.value = 150 + Math.round(Math.random()*60);
-  weightEl.value = 50 + Math.round(Math.random()*70);
-  activityEl.value = ['low','medium','high'][Math.floor(Math.random()*3)];
-  ifastingEl.checked = Math.random()>0.6;
-  ifastingIntensityEl.value = Math.floor(Math.random()*80);
-  sugarEl.value = ['none','low','medium','strict'][Math.floor(Math.random()*4)];
-  sportDaysEl.value = Math.floor(Math.random()*8);
-  sportDaysVal.textContent = sportDaysEl.value;
-  disciplineEl.value = Math.floor(Math.random()*101);
-  disciplineVal.textContent = disciplineEl.value;
+  heightEl.value = 150 + Math.floor(Math.random()*60);
+  weightEl.value = 50 + Math.floor(Math.random()*70);
+  genderEl.value = ['neutral','male','female'][Math.floor(Math.random()*3)];
+  stepsEl.value = Math.floor(Math.random()*12000);
+  sleepEl.value = (6 + Math.floor(Math.random()*4));
+  waterEl.value = (1 + Math.floor(Math.random()*5));
+  sportDaysEl.value = Math.floor(Math.random()*8); sportDaysVal.textContent = sportDaysEl.value;
+  dietPlanEl.value = ['maintain','moderate_loss','aggressive_loss','build_muscle','balanced_wellness'][Math.floor(Math.random()*5)];
+  sugarEl.value = ['nochange','less_drinks','cut_sweets','lowadded'][Math.floor(Math.random()*4)];
   updateAll();
 }
 
+// Avatar image helpers
+function setAvatarImage(imgEl, gender, when='now', weightOverride){
+  // pick index based on gender and (optionally) weight/BMI to provide variety
+  let idx = 1;
+  if(weightOverride){
+    // map weight to 1..IMAGE_COUNT
+    idx = Math.round(mapRange(weightOverride, 40, 120, 1, IMAGE_COUNT));
+    idx = Math.max(1, Math.min(IMAGE_COUNT, idx));
+  } else {
+    idx = Math.floor(1 + Math.random()*IMAGE_COUNT);
+  }
+  const g = (gender==='male' || gender==='female') ? gender : 'neutral';
+  const path = g === 'neutral' ? `images/neutral/${idx}.jpg` : `images/${g}/${idx}.jpg`;
+
+  // Try to load image; if it fails we'll keep the fallback SVG visible
+  imgEl.onload = ()=>{
+    imgEl.style.display = 'block';
+    if(when==='now'){ avatarNowSVG.style.display = 'none'; } else { avatarFutureSVG.style.display = 'none'; }
+  };
+  imgEl.onerror = ()=>{
+    imgEl.style.display = 'none';
+    if(when==='now'){ avatarNowSVG.style.display = 'block'; } else { avatarFutureSVG.style.display = 'block'; }
+  };
+  imgEl.src = path;
+}
+
+function loadAvatarImages(){
+  // pre-seed img tags with conservative defaults; actual images will be set on render
+  avatarNowImg.style.display = 'none'; avatarFutureImg.style.display = 'none';
+}
+
 function exportPNG(){
-  // export SVG of future avatar as PNG
-  const svg = qs('#avatarFuture');
-  const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(svg);
+  // export the future avatar (image or fallback SVG) as PNG
+  const img = avatarFutureImg;
+  const svg = avatarFutureSVG;
   const canvas = document.createElement('canvas');
   canvas.width = 900; canvas.height = 1350;
   const ctx = canvas.getContext('2d');
-  const img = new Image();
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  if(img && img.src && img.style.display !== 'none'){
+    const tmp = new Image();
+    tmp.crossOrigin = 'anonymous';
+    tmp.onload = ()=>{
+      ctx.drawImage(tmp,0,0,canvas.width,canvas.height);
+      downloadCanvas(canvas);
+    };
+    tmp.onerror = ()=>{ // fallback to svg
+      drawSVGToCanvas(svg, canvas, ctx);
+    };
+    tmp.src = img.src;
+  } else {
+    drawSVGToCanvas(svg, canvas, ctx);
+  }
+}
+
+function drawSVGToCanvas(svgEl, canvas, ctx){
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svgEl);
   const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
   const url = URL.createObjectURL(blob);
-  img.onload = ()=>{
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  const tmp = new Image();
+  tmp.onload = ()=>{
+    ctx.drawImage(tmp,0,0,canvas.width,canvas.height);
     URL.revokeObjectURL(url);
-    const a = document.createElement('a');
-    a.download = `lifestyle-scenario-week${currentWeeks}.png`;
-    a.href = canvas.toDataURL('image/png');
-    a.click();
+    downloadCanvas(canvas);
   };
-  img.src = url;
+  tmp.onerror = ()=>{ alert('Export failed: could not render image.'); };
+  tmp.src = url;
+}
+
+function downloadCanvas(canvas){
+  const a = document.createElement('a');
+  a.download = `lifestyle-scenario-week${currentWeeks}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
 }
 
 // helpers
 function mapRange(v, inMin, inMax, outMin, outMax){
-  const t = Math.max(0, Math.min(1, (v - inMin)/(inMax - inMin)));
+  const t = isNaN(v) ? 0.5 : Math.max(0, Math.min(1, (v - inMin)/(inMax - inMin)));
   return outMin + (outMax - outMin)*t;
+}
+
+function updateAll(){
+  const state = readInputs();
+  renderNow(state);
+  renderFuture(state, currentWeeks);
 }
 
 init();
