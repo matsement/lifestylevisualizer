@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Body Scenario Simulator — script.js
+   Lifestyle Visualizer — script.js
    ==========================================================================
    IMPORTANT: nothing in this file is medical logic. Every formula below is a
    deliberately simplified heuristic, loosely inspired by commonly cited
@@ -38,14 +38,15 @@
   const WEIGHTS = { steps: 14, exercise: 18, sugar: 14, wholefoods: 14, water: 8, sleep: 14, stress: 6, alcohol: 6, if: 6 };
 
   // Maps a lifestyle-input element to the state key + default it represents,
-  // used only to show the "profile completeness" nudge.
+  // used only to show the "profile completeness" nudge. Intermittent fasting
+  // is intentionally excluded: it's an optional habit, and leaving it off is
+  // a valid, "complete" answer rather than a missing field.
   const COMPLETENESS_KEYS = [
     { id: 'stepsRange', key: 'steps' },
     { id: 'exerciseRange', key: 'exerciseDays' },
     { id: 'sugarRange', key: 'sugarServings' },
     { id: 'wholeFoodsRange', key: 'wholeFoodsPct' },
     { id: 'waterRange', key: 'waterLiters' },
-    { id: 'ifToggle', key: 'ifEnabled' },
     { id: 'sleepRange', key: 'sleepHours' },
     { id: 'stressSelect', key: 'stressLevel' },
     { id: 'alcoholRange', key: 'alcoholDrinks' },
@@ -71,8 +72,8 @@
     discipline: 50
   };
 
-  const STORAGE_KEY = 'bss-state-v1';
-  const THEME_KEY = 'bss-theme';
+  const STORAGE_KEY = 'lv-state-v1';
+  const THEME_KEY = 'lv-theme';
 
   /* ------------------------------------------------------------------
      DOM references
@@ -110,7 +111,7 @@
     randomizeBtn: $('randomizeBtn'), resetBtn: $('resetBtn'),
     learnMoreBody: $('learnMoreBody'),
 
-    emptyState: $('emptyState'), simContent: $('simContent'),
+    simContent: $('simContent'),
     compareToggleBtn: $('compareToggleBtn'),
 
     avatarStage: $('avatarStage'),
@@ -445,13 +446,38 @@
 
   (function wireCompareDrag() {
     let dragging = false;
+    let activePointerId = null;
+
     function posToPct(clientX) {
       const rect = dom.compareStage.getBoundingClientRect();
       return ((clientX - rect.left) / rect.width) * 100;
     }
-    dom.compareHandle.addEventListener('pointerdown', (e) => { dragging = true; e.preventDefault(); });
-    window.addEventListener('pointermove', (e) => { if (dragging) setCompareSplit(posToPct(e.clientX)); });
-    window.addEventListener('pointerup', () => { dragging = false; });
+
+    function endDrag() {
+      if (activePointerId !== null && dom.compareHandle.hasPointerCapture && dom.compareHandle.hasPointerCapture(activePointerId)) {
+        dom.compareHandle.releasePointerCapture(activePointerId);
+      }
+      dragging = false;
+      activePointerId = null;
+    }
+
+    dom.compareHandle.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      activePointerId = e.pointerId;
+      // Pointer capture keeps every subsequent move routed to the handle
+      // itself (even once the finger drifts off it), and combined with
+      // touch-action: none in the CSS, stops the browser from ever
+      // starting its own vertical-scroll gesture on this element.
+      if (dom.compareHandle.setPointerCapture) dom.compareHandle.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    dom.compareHandle.addEventListener('pointermove', (e) => {
+      if (!dragging || e.pointerId !== activePointerId) return;
+      setCompareSplit(posToPct(e.clientX));
+      e.preventDefault();
+    });
+    dom.compareHandle.addEventListener('pointerup', endDrag);
+    dom.compareHandle.addEventListener('pointercancel', endDrag);
     dom.compareHandle.addEventListener('keydown', (e) => {
       const current = Number(dom.compareHandle.getAttribute('aria-valuenow')) || 50;
       if (e.key === 'ArrowLeft') setCompareSplit(current - 5);
@@ -532,7 +558,7 @@
       const bmi = calcBMI(simulateWeeks(state).results[week], state.heightCm);
       ctx.fillStyle = isDark ? '#fdf0d5' : '#003049';
       ctx.font = '600 20px sans-serif';
-      ctx.fillText(`Body Scenario Simulator \u2014 Week ${week}`, 20, h - 56);
+      ctx.fillText(`Lifestyle Visualizer \u2014 Week ${week}`, 20, h - 56);
       ctx.font = '400 14px sans-serif';
       ctx.fillText(`Simulated BMI: ${bmi.toFixed(1)} (${bmiCategory(bmi).label})`, 20, h - 30);
       ctx.font = '400 11px sans-serif';
@@ -540,7 +566,7 @@
 
       try {
         const link = document.createElement('a');
-        link.download = `body-scenario-week-${week}.png`;
+        link.download = `lifestyle-visualizer-week-${week}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
       } catch (err) {
@@ -602,9 +628,6 @@
     loadState();
     applyStateToInputs();
     buildLearnMore();
-
-    dom.emptyState.hidden = true;
-    dom.simContent.hidden = false;
 
     render();
   }
