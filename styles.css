@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Body Scenario Simulator — Stylesheet
+   Lifestyle Visualizer — Stylesheet
    Palette: Molten Lava #780000 / Flag Red #c1121f / Papaya Whip #fdf0d5
             Deep Space Blue #003049 / Steel Blue #669bbc
    ========================================================================== */
@@ -142,6 +142,22 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01e
 
 @media (max-width: 920px) {
   .layout { grid-template-columns: 1fr; }
+
+  /* On phones, break the sidebar apart so its cards can be reordered
+     alongside the visualization instead of being grouped above it. */
+  .control-panel {
+    display: contents;
+  }
+
+  .card[data-card="you"]        { order: 1; }
+  .viewport-panel               { order: 2; }
+  .completeness-card            { order: 3; }
+  .card[data-card="movement"]   { order: 4; }
+  .card[data-card="nutrition"]  { order: 5; }
+  .card[data-card="recovery"]   { order: 6; }
+  .card[data-card="advanced"]   { order: 7; }
+  .panel-actions                { order: 8; }
+  .learn-more                   { order: 9; }
 }
 
 /* ---------------- Control panel ---------------- */
@@ -350,15 +366,6 @@ input[type="range"]::-moz-range-track {
   min-height: 480px;
 }
 
-.empty-state {
-  display: grid; place-items: center;
-  min-height: 420px;
-  color: var(--text-muted);
-  font-size: 1rem;
-  text-align: center;
-  padding: 20px;
-}
-
 .viewport-head {
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 10px;
@@ -453,6 +460,9 @@ input[type="range"]::-moz-range-track {
   width: 3px; background: var(--accent);
   transform: translateX(-50%);
   cursor: ew-resize;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .compare-handle::after {
   content: '⇔';
