@@ -1,158 +1,278 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lifestyle Visualizer — Personal Goal Simulator</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Body Scenario Simulator</title>
+<meta name="description" content="A playful, educational simulator that visualizes how lifestyle habits could shape your body over 12 weeks. Not a medical tool.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <header>
-    <h1>Lifestyle Visualizer</h1>
-    <p class="tagline">Personal, science-informed scenario previews — educational only, not medical advice.</p>
-  </header>
+<body data-theme="light">
 
-  <main class="container">
-    <section class="controls" aria-label="Inputs and scenarios">
-      <h2>Your profile</h2>
+<header class="site-header">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">◎</span>
+    <div class="brand-text">
+      <h1>Body Scenario Simulator</h1>
+      <p class="brand-sub">Visualize where your habits could take you</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <label class="name-field">
+      <span>Your name <em>(optional)</em></span>
+      <input type="text" id="userName" placeholder="e.g. Mats" maxlength="24" autocomplete="given-name">
+    </label>
+    <button id="themeToggle" class="icon-btn" type="button" aria-pressed="false" title="Toggle dark mode">
+      <span id="themeIcon" aria-hidden="true">☾</span>
+      <span class="sr-only">Toggle dark mode</span>
+    </button>
+  </div>
+</header>
 
-      <div class="row">
-        <label>First name (optional)
-          <input id="name" type="text" placeholder="Alex">
-        </label>
-        <label>Gender (optional)
-          <select id="gender">
-            <option value="neutral">Prefer not to say</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-        </label>
+<div class="disclaimer-banner" role="note">
+  <strong>This is not a medical tool.</strong> It's a simplified, playful visualization based on general lifestyle patterns, not a prediction. Everyone's body responds differently &mdash; for real health or weight guidance, talk to a doctor or dietitian.
+</div>
+
+<main class="layout">
+
+  <!-- CONTROL PANEL -->
+  <section class="control-panel" aria-label="Your inputs">
+
+    <div class="completeness-card">
+      <div class="completeness-head">
+        <span>Profile completeness</span>
+        <span id="completenessText">0 / 10</span>
+      </div>
+      <div class="completeness-track">
+        <div class="completeness-fill" id="completenessFill"></div>
+      </div>
+      <p class="completeness-hint">Fill in every field for the most accurate, personal visualization. Rough guesses still work &mdash; you can just start with your basics below.</p>
+    </div>
+
+    <div class="card" data-card="you">
+      <h2 class="card-title">01 &middot; You</h2>
+
+      <div class="field-row">
+        <label for="heightInput">Height <span class="unit">(cm)</span></label>
+        <div class="field-live">
+          <input type="range" id="heightRange" min="120" max="220" step="1" value="170" data-track="basics">
+          <input type="number" id="heightInput" min="120" max="220" step="1" value="170" inputmode="numeric">
+        </div>
       </div>
 
-      <div class="row">
-        <label>Height (cm)
-          <input id="height" type="number" min="100" max="230" value="175">
-        </label>
-        <label>Weight (kg)
-          <input id="weight" type="number" min="30" max="200" value="80">
-        </label>
+      <div class="field-row">
+        <label for="weightInput">Current weight <span class="unit">(kg)</span></label>
+        <div class="field-live">
+          <input type="range" id="weightRange" min="35" max="180" step="1" value="75" data-track="basics">
+          <input type="number" id="weightInput" min="35" max="180" step="1" value="75" inputmode="numeric">
+        </div>
       </div>
 
-      <h3>Daily habits (fill for best results)</h3>
+      <div class="field-row">
+        <span class="field-label-standalone">Avatar style</span>
+        <div class="segmented" role="radiogroup" aria-label="Avatar style">
+          <button type="button" class="segmented-btn is-active" data-avatar="female" role="radio" aria-checked="true">Female</button>
+          <button type="button" class="segmented-btn" data-avatar="male" role="radio" aria-checked="false">Male</button>
+        </div>
+      </div>
 
-      <label>Daily steps
-        <input id="steps" type="number" min="0" max="50000" value="4000">
-      </label>
-
-      <label>Sleep per night (hours)
-        <input id="sleep" type="number" min="0" max="14" step="0.5" value="7">
-      </label>
-
-      <label>Water per day (litres)
-        <input id="water" type="number" min="0" max="10" step="0.1" value="2">
-      </label>
-
-      <label>Sport / workouts per week
-        <input id="sportDays" type="range" min="0" max="7" value="2">
-        <span id="sportDaysVal">2</span>
-      </label>
-
-      <label>Diet choice
-        <select id="dietPlan">
-          <option value="maintain">No major change (maintain)</option>
-          <option value="moderate_loss">Moderate deficit (safe weight loss)</option>
-          <option value="aggressive_loss">Aggressive deficit (faster loss)</option>
-          <option value="build_muscle">Calorie + protein for muscle gain</option>
-          <option value="balanced_wellness">Balanced healthy habits</option>
+      <div class="field-row">
+        <label for="activityLevel">Daily activity level <span class="unit">(outside of exercise)</span></label>
+        <select id="activityLevel" data-track="basics">
+          <option value="sedentary">Mostly sitting (desk job, little walking)</option>
+          <option value="light" selected>Lightly active (some walking/standing)</option>
+          <option value="moderate">Moderately active (on your feet a lot)</option>
+          <option value="high">Very active (physical job or lifestyle)</option>
         </select>
-      </label>
+      </div>
+    </div>
 
-      <label>Sugar habits
-        <select id="sugar">
-          <option value="nochange">No change</option>
-          <option value="less_drinks">Reduce sugary drinks</option>
-          <option value="cut_sweets">Cut most sweets/snacks</option>
-          <option value="lowadded">Very low added sugar</option>
+    <div class="card" data-card="movement">
+      <h2 class="card-title">02 &middot; Movement</h2>
+
+      <div class="field-row">
+        <label for="stepsRange">Daily steps <span class="unit" id="stepsValue">6,000</span></label>
+        <input type="range" id="stepsRange" min="0" max="20000" step="500" value="6000" data-track="lifestyle" data-info="steps">
+        <p class="field-help">Roughly how many steps do you walk on an average day?</p>
+      </div>
+
+      <div class="field-row">
+        <label for="exerciseRange">Exercise sessions per week <span class="unit" id="exerciseValue">2</span></label>
+        <input type="range" id="exerciseRange" min="0" max="7" step="1" value="2" data-track="lifestyle" data-info="exercise">
+        <p class="field-help">Structured workouts: gym, sports, running, cycling, swimming, etc.</p>
+      </div>
+    </div>
+
+    <div class="card" data-card="nutrition">
+      <h2 class="card-title">03 &middot; Nutrition</h2>
+
+      <div class="field-row">
+        <label for="sugarRange">Sugary drinks or snacks per day <span class="unit" id="sugarValue">3</span></label>
+        <input type="range" id="sugarRange" min="0" max="8" step="1" value="3" data-track="lifestyle" data-info="sugar">
+        <p class="field-help">Think soda, candy, pastries, sweetened coffee, dessert, etc.</p>
+      </div>
+
+      <div class="field-row">
+        <label for="wholeFoodsRange">Share of whole, unprocessed food <span class="unit" id="wholeFoodsValue">50%</span></label>
+        <input type="range" id="wholeFoodsRange" min="0" max="100" step="5" value="50" data-track="lifestyle" data-info="wholefoods">
+        <p class="field-help">Vegetables, fruit, meat, fish, grains, legumes vs. packaged/fast food.</p>
+      </div>
+
+      <div class="field-row">
+        <label for="waterRange">Water intake per day <span class="unit" id="waterValue">1.5 L</span></label>
+        <input type="range" id="waterRange" min="0" max="4" step="0.25" value="1.5" data-track="lifestyle" data-info="water">
+        <p class="field-help">Plain water, roughly &mdash; coffee and soda don't really count.</p>
+      </div>
+
+      <div class="field-row toggle-row">
+        <label for="ifToggle" class="toggle-label">
+          <input type="checkbox" id="ifToggle" data-track="lifestyle">
+          <span>I eat within a limited daily time window (intermittent fasting)</span>
+        </label>
+      </div>
+      <div class="field-row" id="ifWindowWrap" hidden>
+        <label for="ifWindowRange">Daily eating window <span class="unit" id="ifWindowValue">8 hours</span></label>
+        <input type="range" id="ifWindowRange" min="4" max="12" step="0.5" value="8" data-info="if">
+        <p class="field-help">The hours per day you eat in. E.g. 8am&ndash;4pm is an 8 hour window.</p>
+      </div>
+    </div>
+
+    <div class="card" data-card="recovery">
+      <h2 class="card-title">04 &middot; Recovery</h2>
+
+      <div class="field-row">
+        <label for="sleepRange">Sleep per night <span class="unit" id="sleepValue">7 hours</span></label>
+        <input type="range" id="sleepRange" min="4" max="10" step="0.5" value="7" data-track="lifestyle" data-info="sleep">
+      </div>
+
+      <div class="field-row">
+        <label for="stressSelect">Typical stress level</label>
+        <select id="stressSelect" data-track="lifestyle" data-info="stress">
+          <option value="low">Low &mdash; mostly calm</option>
+          <option value="medium" selected>Medium &mdash; some stressful days</option>
+          <option value="high">High &mdash; often stressed</option>
         </select>
-      </label>
+      </div>
+    </div>
 
-      <h3>Scenarios</h3>
-      <div class="row buttons">
-        <button data-weeks="0" class="scenario active">Now</button>
-        <button data-weeks="4" class="scenario">4 weeks</button>
-        <button data-weeks="12" class="scenario">12 weeks</button>
-        <button data-weeks="24" class="scenario">24 weeks</button>
+    <div class="card" data-card="advanced">
+      <h2 class="card-title">05 &middot; Advanced factors</h2>
+
+      <div class="field-row">
+        <label for="alcoholRange">Alcoholic drinks per week <span class="unit" id="alcoholValue">2</span></label>
+        <input type="range" id="alcoholRange" min="0" max="20" step="1" value="2" data-track="lifestyle" data-info="alcohol">
       </div>
 
-      <div class="row small-actions">
-        <button id="compare">Compare Now / Scenario</button>
-        <button id="reset">Reset</button>
-        <button id="randomize">Randomize</button>
-        <button id="export">Export PNG</button>
+      <div class="field-row">
+        <label for="disciplineRange">How consistent would you realistically be? <span class="unit" id="disciplineValue">50%</span></label>
+        <input type="range" id="disciplineRange" min="0" max="100" step="5" value="50" data-track="lifestyle" data-info="discipline">
+        <p class="field-help">Be honest &mdash; sticking to a plan for 12 weeks matters more than how ambitious it is.</p>
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button type="button" id="randomizeBtn" class="btn btn-ghost">Randomize scenario</button>
+      <button type="button" id="resetBtn" class="btn btn-ghost">Reset all</button>
+    </div>
+
+    <details class="learn-more">
+      <summary>What do these factors mean, and why include them?</summary>
+      <div class="learn-more-body" id="learnMoreBody"><!-- populated by script.js --></div>
+    </details>
+
+  </section>
+
+  <!-- SIMULATION VIEWPORT -->
+  <section class="viewport-panel" aria-label="Simulation viewport">
+
+    <div class="empty-state" id="emptyState">
+      <p>Enter your height and weight on the left to start the simulation.</p>
+    </div>
+
+    <div class="sim-content" id="simContent" hidden>
+
+      <div class="viewport-head">
+        <h2 id="viewportGreeting">Your simulation</h2>
+        <button type="button" id="compareToggleBtn" class="btn btn-outline">Compare now vs. later</button>
       </div>
 
-      <section class="notes">
-        <strong>Tip:</strong> For the most personal, realistic preview, please fill in daily steps, sleep and water. The images are central — add up to 20 images per gender in images/male/1.jpg .. images/male/20.jpg and images/female/1.jpg .. images/female/20.jpg. If images are missing the app will fall back to a simple illustration.
-      </section>
-    </section>
-
-    <section class="visual" aria-label="Visualization">
-      <div class="greeting">Hello <span id="greetName">there</span> — here's how your scenario could look.</div>
-
-      <div class="viz-stage">
-        <div class="avatar-wrapper">
-          <div class="avatar-media" id="nowMedia">
-            <img id="avatarNowImg" alt="Current body image" crossorigin="anonymous">
-            <svg id="avatarNowSVG" viewBox="0 0 200 300" width="300" height="450" aria-hidden="true">
-              <g id="bodyGroupNow" transform="translate(100,150)">
-                <ellipse id="torsoNow" cx="0" cy="20" rx="32" ry="60" fill="#d1b3ff" />
-                <rect id="neckNow" x="-8" y="-40" width="16" height="20" rx="6" fill="#eecfb5" />
-                <circle id="headNow" cx="0" cy="-60" r="20" fill="#ffd7c2" />
-              </g>
+      <div class="stage-wrap">
+        <div class="avatar-stage" id="avatarStage">
+          <div class="scanlines" aria-hidden="true"></div>
+          <img id="avatarImgBase" class="avatar-img" alt="" aria-hidden="true">
+          <img id="avatarImgBlend" class="avatar-img avatar-img-blend" alt="" aria-hidden="true">
+          <div class="avatar-fallback" id="avatarFallback" hidden>
+            <svg viewBox="0 0 120 220" class="fallback-silhouette" aria-hidden="true">
+              <ellipse cx="60" cy="30" rx="22" ry="26"/>
+              <path d="M60 56 C25 56 15 90 15 130 L15 200 C15 210 25 216 35 216 L85 216 C95 216 105 210 105 200 L105 130 C105 90 95 56 60 56 Z"/>
             </svg>
+            <p><strong>Add your image</strong><br><span id="fallbackFilename">female_10.jpg</span><br>to <code>/images/</code></p>
           </div>
-          <div class="caption">Now</div>
+          <div class="hud-readout" id="hudReadout" aria-hidden="true"></div>
         </div>
 
-        <div class="avatar-wrapper">
-          <div class="avatar-media" id="futureMedia">
-            <img id="avatarFutureImg" alt="Scenario body image" crossorigin="anonymous">
-            <svg id="avatarFutureSVG" viewBox="0 0 200 300" width="300" height="450" aria-hidden="true">
-              <g id="bodyGroupFuture" transform="translate(100,150)">
-                <ellipse id="torsoFuture" cx="0" cy="20" rx="32" ry="60" fill="#bfe8ff" />
-                <rect id="neckFuture" x="-8" y="-40" width="16" height="20" rx="6" fill="#eecfb5" />
-                <circle id="headFuture" cx="0" cy="-60" r="20" fill="#ffd7c2" />
-              </g>
-            </svg>
+        <div class="compare-stage" id="compareStage" hidden>
+          <div class="compare-image compare-before">
+            <img id="compareBeforeImg" alt="Your body at week 0">
           </div>
-          <div class="caption" id="futureLabel">Scenario</div>
+          <div class="compare-image compare-after" id="compareAfterClip">
+            <img id="compareAfterImg" alt="Your simulated body at a future week">
+          </div>
+          <div class="compare-handle" id="compareHandle" tabindex="0" role="slider" aria-label="Drag to compare" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
+          <span class="compare-label compare-label-left">Now</span>
+          <span class="compare-label compare-label-right">Week <span id="compareWeekLabel">12</span></span>
         </div>
-
-        <aside class="bmi-panel">
-          <div class="bmi-value">BMI: <strong id="bmiNow">—</strong></div>
-          <div class="bmi-bar" aria-hidden="true">
-            <div class="bmi-seg under">Underweight<br><span class="range">&lt;18.5</span></div>
-            <div class="bmi-seg normal">Normal<br><span class="range">18.5–24.9</span></div>
-            <div class="bmi-seg over">Overweight<br><span class="range">25–29.9</span></div>
-            <div class="bmi-seg obese">Obese<br><span class="range">≥30</span></div>
-            <div id="bmiMarker" title="Your BMI"></div>
-          </div>
-          <div class="bmi-text" id="bmiInterpret">Fill more fields for a better personalized preview.</div>
-          <div class="scenario-metrics">
-            <div>Current weight: <span id="weightNow">—</span> kg</div>
-            <div>Scenario weight: <span id="weightFuture">—</span> kg</div>
-            <div>Weekly change estimate: <span id="weeklyPct">—</span></div>
-          </div>
-        </aside>
       </div>
 
-    </section>
-  </main>
+      <div class="timeline">
+        <div class="timeline-labels">
+          <span data-week-label="0">Now</span>
+          <span data-week-label="4">Week 4</span>
+          <span data-week-label="8">Week 8</span>
+          <span data-week-label="12">Week 12</span>
+        </div>
+        <input type="range" id="weekScrubber" min="0" max="3" step="1" value="0" aria-label="Simulated week">
+      </div>
 
-  <footer>
-    <small>Created for educational scenarios. Not medical advice. Personalize your inputs for the best preview.</small>
-  </footer>
+      <div class="bmi-card">
+        <div class="bmi-head">
+          <span>BMI on the general scale</span>
+          <span class="bmi-value" id="bmiValue">&mdash;</span>
+        </div>
+        <div class="bmi-bar-track" id="bmiBarTrack">
+          <div class="bmi-marker" id="bmiMarker"></div>
+        </div>
+        <div class="bmi-scale-labels">
+          <span>Underweight</span>
+          <span>Healthy range</span>
+          <span>Overweight</span>
+          <span>Obese range</span>
+        </div>
+        <p class="bmi-footnote">BMI is only a weight-to-height ratio. It doesn't measure muscle, fat distribution or overall health &mdash; treat it as one rough reference point, not a verdict.</p>
+      </div>
 
-  <script src="script.js"></script>
+      <div class="insight-card">
+        <h3 id="insightGreeting">Your snapshot</h3>
+        <p id="insightSummary"></p>
+        <p id="insightTip" class="insight-tip"></p>
+      </div>
+
+      <div class="panel-actions">
+        <button type="button" id="exportBtn" class="btn btn-solid">Download snapshot</button>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>Body Scenario Simulator is an educational, playful tool. It does not diagnose, treat, or predict anything about your real body. Results are simplified illustrations of general, widely cited lifestyle patterns &mdash; not personal medical advice. If you have concerns about your weight, eating, or health, please speak with a doctor, dietitian, or other qualified professional.</p>
+</footer>
+
+<script src="script.js"></script>
 </body>
 </html>
