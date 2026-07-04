@@ -21,10 +21,6 @@
     </div>
   </div>
   <div class="header-actions">
-    <label class="name-field">
-      <span>Your name <em>(optional)</em></span>
-      <input type="text" id="userName" placeholder="e.g. John" maxlength="24" autocomplete="given-name">
-    </label>
     <button id="themeToggle" class="icon-btn" type="button" aria-pressed="false" title="Toggle dark mode">
       <span id="themeIcon" aria-hidden="true">☾</span>
       <span class="sr-only">Toggle dark mode</span>
@@ -32,25 +28,15 @@
   </div>
 </header>
 
-<div class="disclaimer-banner" role="note">
-  <strong>This is not a medical tool.</strong> It's a simplified, playful visualization based on general lifestyle patterns, not a prediction. Everyone's body responds differently &mdash; for real health or weight guidance, talk to a doctor or dietitian.
-</div>
+<details class="disclaimer-banner">
+  <summary><strong>This is not a medical tool.</strong> <span class="disclaimer-hint">Tap to read more</span></summary>
+  <p class="disclaimer-body">It's a simplified, playful visualization based on general lifestyle patterns, not a prediction. Everyone's body responds differently &mdash; for real health or weight guidance, talk to a doctor or dietitian.</p>
+</details>
 
 <main class="layout">
 
   <!-- CONTROL PANEL -->
   <section class="control-panel" aria-label="Your inputs">
-
-    <div class="completeness-card">
-      <div class="completeness-head">
-        <span>Profile completeness</span>
-        <span id="completenessText">0 / 9</span>
-      </div>
-      <div class="completeness-track">
-        <div class="completeness-fill" id="completenessFill"></div>
-      </div>
-      <p class="completeness-hint">Fill in every field for the most accurate, personal visualization. Rough guesses still work &mdash; you can just start with your basics below.</p>
-    </div>
 
     <div class="card" data-card="you">
       <h2 class="card-title">01 &middot; You</h2>
@@ -256,9 +242,7 @@
         <p id="insightTip" class="insight-tip"></p>
       </div>
 
-      <div class="panel-actions">
-        <button type="button" id="exportBtn" class="btn btn-solid">Download snapshot</button>
-      </div>
+      <p class="habits-nudge">Want to see how this could play out over 12 weeks? Fill in your habits below to bring the simulation to life.</p>
 
     </div>
   </section>
