@@ -37,24 +37,7 @@
 
   const WEIGHTS = { steps: 14, exercise: 18, sugar: 14, wholefoods: 14, water: 8, sleep: 14, stress: 6, alcohol: 6, if: 6 };
 
-  // Maps a lifestyle-input element to the state key + default it represents,
-  // used only to show the "profile completeness" nudge. Intermittent fasting
-  // is intentionally excluded: it's an optional habit, and leaving it off is
-  // a valid, "complete" answer rather than a missing field.
-  const COMPLETENESS_KEYS = [
-    { id: 'stepsRange', key: 'steps' },
-    { id: 'exerciseRange', key: 'exerciseDays' },
-    { id: 'sugarRange', key: 'sugarServings' },
-    { id: 'wholeFoodsRange', key: 'wholeFoodsPct' },
-    { id: 'waterRange', key: 'waterLiters' },
-    { id: 'sleepRange', key: 'sleepHours' },
-    { id: 'stressSelect', key: 'stressLevel' },
-    { id: 'alcoholRange', key: 'alcoholDrinks' },
-    { id: 'disciplineRange', key: 'discipline' }
-  ];
-
   const DEFAULTS = {
-    name: '',
     avatarSet: 'female',
     heightCm: 170,
     weightKg: 75,
@@ -84,10 +67,6 @@
     body: document.body,
     themeToggle: $('themeToggle'),
     themeIcon: $('themeIcon'),
-    userName: $('userName'),
-
-    completenessText: $('completenessText'),
-    completenessFill: $('completenessFill'),
 
     heightRange: $('heightRange'), heightInput: $('heightInput'),
     weightRange: $('weightRange'), weightInput: $('weightInput'),
@@ -129,9 +108,7 @@
 
     bmiValue: $('bmiValue'), bmiMarker: $('bmiMarker'),
 
-    insightGreeting: $('insightGreeting'), insightSummary: $('insightSummary'), insightTip: $('insightTip'),
-
-    exportBtn: $('exportBtn')
+    insightGreeting: $('insightGreeting'), insightSummary: $('insightSummary'), insightTip: $('insightTip')
   };
 
   /* ------------------------------------------------------------------
@@ -244,16 +221,14 @@
     return { results, scores, quality, disciplineFactor };
   }
 
-  // Float image index (1..IMAGE_COUNT). weekFraction (0..1) phases in the
-  // fitness/tone nudge gradually, so "Now" always reflects true current BMI,
-  // and simulated toning only builds in over the chosen number of weeks.
-  function imageIndexFor(weightKg, heightCm, scores, disciplineFactor, weekFraction) {
+  // Float image index (1..IMAGE_COUNT), driven purely by BMI so the mapping
+  // is fully predictable: BMI 15 (very underweight) -> index 1 (skinniest
+  // photo), BMI 40+ (very obese) -> index IMAGE_COUNT (heaviest photo), with
+  // every BMI in between landing on a proportional point along that range.
+  function imageIndexFor(weightKg, heightCm) {
     const bmi = calcBMI(weightKg, heightCm);
-    const basePos = bmiToPercent(bmi);
-    const fitnessBlend = (scores.exercise + scores.wholefoods + disciplineFactor * 100) / 3;
-    const fitnessAdjustment = (fitnessBlend - 50) * 0.15 * weekFraction;
-    const finalPos = clamp(basePos - fitnessAdjustment, 0, 100);
-    return 1 + (finalPos / 100) * (IMAGE_COUNT - 1);
+    const pos = bmiToPercent(bmi);
+    return 1 + (pos / 100) * (IMAGE_COUNT - 1);
   }
 
   function imagePath(set, index) {
@@ -269,14 +244,6 @@
   function syncPair(rangeEl, numberEl, value) {
     if (rangeEl) rangeEl.value = value;
     if (numberEl) numberEl.value = value;
-  }
-
-  function updateCompleteness() {
-    const total = COMPLETENESS_KEYS.length;
-    const done = COMPLETENESS_KEYS.filter((item) => state[item.key] !== DEFAULTS[item.key]).length;
-    dom.completenessText.textContent = `${done} / ${total}`;
-    dom.completenessFill.style.width = `${(done / total) * 100}%`;
-    return { done, total };
   }
 
   function updateAvatarStage(set, floatIndex) {
@@ -316,11 +283,6 @@
   }
 
   function renderInsight(s, sim) {
-    const name = s.name && s.name.trim() ? s.name.trim() : null;
-    dom.insightGreeting.textContent = name ? `Your snapshot, ${name}` : 'Your snapshot';
-
-    const { done, total } = updateCompleteness();
-
     const week12Weight = sim.results[12];
     const week12Bmi = calcBMI(week12Weight, s.heightCm);
     const week12Cat = bmiCategory(week12Bmi);
@@ -337,13 +299,9 @@
     }
     dom.insightSummary.textContent = trendSentence;
 
-    if (done < total) {
-      dom.insightTip.textContent = `Fill in ${total - done} more habit${total - done === 1 ? '' : 's'} on the left for a sharper, more personal picture.`;
-    } else {
-      const weak = weakestFactor(sim.scores);
-      const info = FACTOR_INFO[weak];
-      dom.insightTip.textContent = info ? `Your biggest lever right now looks like \u201c${info.title}\u201d \u2014 small, steady improvement there would likely move the simulation the most.` : '';
-    }
+    const weak = weakestFactor(sim.scores);
+    const info = FACTOR_INFO[weak];
+    dom.insightTip.textContent = info ? `Your biggest lever right now looks like \u201c${info.title}\u201d \u2014 small, steady improvement there would likely move the simulation the most.` : '';
   }
 
   function currentWeek() { return WEEKS[currentWeekIndex]; }
@@ -353,7 +311,7 @@
     const week = currentWeek();
     const weightAtWeek = sim.results[week];
     const bmiAtWeek = calcBMI(weightAtWeek, state.heightCm);
-    const floatIndex = imageIndexFor(weightAtWeek, state.heightCm, sim.scores, sim.disciplineFactor, week / 12);
+    const floatIndex = imageIndexFor(weightAtWeek, state.heightCm);
 
     updateAvatarStage(state.avatarSet, floatIndex);
     renderHud(state, sim.scores);
@@ -365,7 +323,7 @@
     });
 
     if (compareMode) {
-      const nowIndex = imageIndexFor(sim.results[0], state.heightCm, sim.scores, sim.disciplineFactor, 0);
+      const nowIndex = imageIndexFor(sim.results[0], state.heightCm);
       dom.compareBeforeImg.src = imagePath(state.avatarSet, Math.round(nowIndex));
       dom.compareAfterImg.src = imagePath(state.avatarSet, Math.round(floatIndex));
       dom.compareWeekLabel.textContent = String(week);
@@ -398,8 +356,6 @@
       render();
     });
   });
-
-  dom.userName.addEventListener('input', () => { state.name = dom.userName.value; render(); });
 
   /* ------------------------------------------------------------------
      Wiring: lifestyle sliders
@@ -511,7 +467,6 @@
     dom.stressSelect.value = state.stressLevel;
     dom.alcoholRange.value = state.alcoholDrinks; dom.alcoholValue.textContent = state.alcoholDrinks;
     dom.disciplineRange.value = state.discipline; dom.disciplineValue.textContent = `${state.discipline}%`;
-    dom.userName.value = state.name;
   }
 
   dom.resetBtn.addEventListener('click', () => {
@@ -540,53 +495,6 @@
     state.discipline = Math.round((Math.random() * 100) / 5) * 5;
     applyStateToInputs();
     render();
-  });
-
-  dom.exportBtn.addEventListener('click', () => {
-    const img = compareMode ? dom.compareAfterImg : dom.avatarImgBase;
-    const w = 480, h = 640;
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext('2d');
-
-    const isDark = dom.body.getAttribute('data-theme') === 'dark';
-    ctx.fillStyle = isDark ? '#003049' : '#fdf0d5';
-    ctx.fillRect(0, 0, w, h);
-
-    function finishAndDownload() {
-      const week = currentWeek();
-      const bmi = calcBMI(simulateWeeks(state).results[week], state.heightCm);
-      ctx.fillStyle = isDark ? '#fdf0d5' : '#003049';
-      ctx.font = '600 20px sans-serif';
-      ctx.fillText(`Lifestyle Visualizer \u2014 Week ${week}`, 20, h - 56);
-      ctx.font = '400 14px sans-serif';
-      ctx.fillText(`Simulated BMI: ${bmi.toFixed(1)} (${bmiCategory(bmi).label})`, 20, h - 30);
-      ctx.font = '400 11px sans-serif';
-      ctx.fillText('Educational visualization, not a medical prediction.', 20, h - 12);
-
-      try {
-        const link = document.createElement('a');
-        link.download = `lifestyle-visualizer-week-${week}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      } catch (err) {
-        alert('Could not export the image. This can happen when opening index.html directly from disk. Try running a local server, or host it on GitHub Pages, and export again.');
-      }
-    }
-
-    if (img && img.src) {
-      const tmp = new Image();
-      tmp.onload = () => {
-        const ratio = Math.min(w / tmp.width, (h - 80) / tmp.height);
-        const dw = tmp.width * ratio, dh = tmp.height * ratio;
-        ctx.drawImage(tmp, (w - dw) / 2, 10, dw, dh);
-        finishAndDownload();
-      };
-      tmp.onerror = finishAndDownload;
-      tmp.src = img.src;
-    } else {
-      finishAndDownload();
-    }
   });
 
   /* ------------------------------------------------------------------
