@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Body Scenario Simulator</title>
-<meta name="description" content="A playful, educational simulator that visualizes how lifestyle habits could shape your body over 12 weeks. Not a medical tool.">
+<title>Lifestyle Visualizer</title>
+<meta name="description" content="A playful, educational visualizer that shows how lifestyle habits could shape your body over 12 weeks. Not a medical tool.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -16,14 +16,14 @@
   <div class="brand">
     <span class="brand-mark" aria-hidden="true">◎</span>
     <div class="brand-text">
-      <h1>Body Scenario Simulator</h1>
+      <h1>Lifestyle Visualizer</h1>
       <p class="brand-sub">Visualize where your habits could take you</p>
     </div>
   </div>
   <div class="header-actions">
     <label class="name-field">
       <span>Your name <em>(optional)</em></span>
-      <input type="text" id="userName" placeholder="e.g. Mats" maxlength="24" autocomplete="given-name">
+      <input type="text" id="userName" placeholder="e.g. John" maxlength="24" autocomplete="given-name">
     </label>
     <button id="themeToggle" class="icon-btn" type="button" aria-pressed="false" title="Toggle dark mode">
       <span id="themeIcon" aria-hidden="true">☾</span>
@@ -44,7 +44,7 @@
     <div class="completeness-card">
       <div class="completeness-head">
         <span>Profile completeness</span>
-        <span id="completenessText">0 / 10</span>
+        <span id="completenessText">0 / 9</span>
       </div>
       <div class="completeness-track">
         <div class="completeness-fill" id="completenessFill"></div>
@@ -188,15 +188,28 @@
   <!-- SIMULATION VIEWPORT -->
   <section class="viewport-panel" aria-label="Simulation viewport">
 
-    <div class="empty-state" id="emptyState">
-      <p>Enter your height and weight on the left to start the simulation.</p>
-    </div>
-
-    <div class="sim-content" id="simContent" hidden>
+    <div class="sim-content" id="simContent">
 
       <div class="viewport-head">
         <h2 id="viewportGreeting">Your simulation</h2>
         <button type="button" id="compareToggleBtn" class="btn btn-outline">Compare now vs. later</button>
+      </div>
+
+      <div class="bmi-card">
+        <div class="bmi-head">
+          <span>BMI on the general scale</span>
+          <span class="bmi-value" id="bmiValue">&mdash;</span>
+        </div>
+        <div class="bmi-bar-track" id="bmiBarTrack">
+          <div class="bmi-marker" id="bmiMarker"></div>
+        </div>
+        <div class="bmi-scale-labels">
+          <span>Underweight</span>
+          <span>Healthy range</span>
+          <span>Overweight</span>
+          <span>Obese range</span>
+        </div>
+        <p class="bmi-footnote">BMI is only a weight-to-height ratio. It doesn't measure muscle, fat distribution or overall health &mdash; treat it as one rough reference point, not a verdict.</p>
       </div>
 
       <div class="stage-wrap">
@@ -237,23 +250,6 @@
         <input type="range" id="weekScrubber" min="0" max="3" step="1" value="0" aria-label="Simulated week">
       </div>
 
-      <div class="bmi-card">
-        <div class="bmi-head">
-          <span>BMI on the general scale</span>
-          <span class="bmi-value" id="bmiValue">&mdash;</span>
-        </div>
-        <div class="bmi-bar-track" id="bmiBarTrack">
-          <div class="bmi-marker" id="bmiMarker"></div>
-        </div>
-        <div class="bmi-scale-labels">
-          <span>Underweight</span>
-          <span>Healthy range</span>
-          <span>Overweight</span>
-          <span>Obese range</span>
-        </div>
-        <p class="bmi-footnote">BMI is only a weight-to-height ratio. It doesn't measure muscle, fat distribution or overall health &mdash; treat it as one rough reference point, not a verdict.</p>
-      </div>
-
       <div class="insight-card">
         <h3 id="insightGreeting">Your snapshot</h3>
         <p id="insightSummary"></p>
@@ -270,7 +266,7 @@
 </main>
 
 <footer class="site-footer">
-  <p>Body Scenario Simulator is an educational, playful tool. It does not diagnose, treat, or predict anything about your real body. Results are simplified illustrations of general, widely cited lifestyle patterns &mdash; not personal medical advice. If you have concerns about your weight, eating, or health, please speak with a doctor, dietitian, or other qualified professional.</p>
+  <p>Lifestyle Visualizer is an educational, playful tool. It does not diagnose, treat, or predict anything about your real body. Results are simplified illustrations of general, widely cited lifestyle patterns &mdash; not personal medical advice. If you have concerns about your weight, eating, or health, please speak with a doctor, dietitian, or other qualified professional.</p>
 </footer>
 
 <script src="script.js"></script>
