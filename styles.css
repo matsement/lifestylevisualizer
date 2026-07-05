@@ -79,6 +79,15 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01e
   flex-wrap: wrap;
 }
 
+@media (max-width: 600px) {
+  .site-header { flex-wrap: nowrap; gap: 10px; }
+  .brand { min-width: 0; flex: 1 1 auto; }
+  .brand-text { min-width: 0; overflow: hidden; }
+  .brand-text h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-actions { flex-shrink: 0; }
+}
+
 .brand { display: flex; align-items: center; gap: 14px; }
 
 .brand-mark {
@@ -139,36 +148,31 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01e
 .layout {
   display: grid;
   grid-template-columns: minmax(300px, 380px) 1fr;
+  grid-template-areas:
+    "you      viewport"
+    "more     viewport";
   gap: 24px;
   padding: 24px clamp(16px, 4vw, 48px) 60px;
   align-items: start;
 }
 
+.you-block     { grid-area: you; }
+.viewport-panel { grid-area: viewport; }
+.more-habits   { grid-area: more; display: flex; flex-direction: column; gap: 16px; }
+
 @media (max-width: 920px) {
-  .layout { grid-template-columns: 1fr; }
-
-  /* On phones, break the sidebar apart so its cards can be reordered
-     alongside the visualization instead of being grouped above it. */
-  .control-panel {
-    display: contents;
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "you"
+      "viewport"
+      "more";
   }
-
-  .card[data-card="you"]        { order: 1; }
-  .viewport-panel               { order: 2; }
-  .card[data-card="movement"]   { order: 3; }
-  .card[data-card="nutrition"]  { order: 4; }
-  .card[data-card="recovery"]   { order: 5; }
-  .card[data-card="advanced"]   { order: 6; }
-  .panel-actions                { order: 7; }
-  .learn-more                   { order: 8; }
 }
 
-/* ---------------- Control panel ---------------- */
+/* ---------------- Sidebar sections (you-block + more-habits) ---------------- */
 
-.control-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.more-habits {
   position: sticky;
   top: 16px;
   max-height: calc(100vh - 32px);
@@ -177,7 +181,7 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01e
 }
 
 @media (max-width: 920px) {
-  .control-panel { position: static; max-height: none; overflow: visible; }
+  .more-habits { position: static; max-height: none; overflow: visible; }
 }
 
 .card {
