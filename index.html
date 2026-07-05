@@ -83,25 +83,30 @@
 
       <div class="viewport-head">
         <h2 id="viewportGreeting">Your simulation</h2>
-        <button type="button" id="compareToggleBtn" class="btn btn-outline">Compare now vs. later</button>
+        <button type="button" id="compareToggleBtn" class="btn btn-outline">
+          <span id="compareToggleBtnFull" class="btn-label-full">Compare now vs. later</span>
+          <span id="compareToggleBtnShort" class="btn-label-short">Compare</span>
+        </button>
       </div>
 
-      <div class="bmi-card">
-        <div class="bmi-head">
-          <span>BMI on the general scale</span>
+      <details class="bmi-card">
+        <summary class="bmi-head">
+          <span>BMI on the general scale <span class="bmi-hint">(tap for scale)</span></span>
           <span class="bmi-value" id="bmiValue">&mdash;</span>
+        </summary>
+        <div class="bmi-body">
+          <div class="bmi-bar-track" id="bmiBarTrack">
+            <div class="bmi-marker" id="bmiMarker"></div>
+          </div>
+          <div class="bmi-scale-labels">
+            <span>Underweight</span>
+            <span>Healthy range</span>
+            <span>Overweight</span>
+            <span>Obese range</span>
+          </div>
+          <p class="bmi-footnote">BMI is only a weight-to-height ratio. It doesn't measure muscle, fat distribution or overall health &mdash; treat it as one rough reference point, not a verdict.</p>
         </div>
-        <div class="bmi-bar-track" id="bmiBarTrack">
-          <div class="bmi-marker" id="bmiMarker"></div>
-        </div>
-        <div class="bmi-scale-labels">
-          <span>Underweight</span>
-          <span>Healthy range</span>
-          <span>Overweight</span>
-          <span>Obese range</span>
-        </div>
-        <p class="bmi-footnote">BMI is only a weight-to-height ratio. It doesn't measure muscle, fat distribution or overall health &mdash; treat it as one rough reference point, not a verdict.</p>
-      </div>
+      </details>
 
       <div class="stage-wrap">
         <div class="avatar-stage" id="avatarStage">
