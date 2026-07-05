@@ -18,9 +18,9 @@
   const WEEKS = [0, 4, 8, 12];
   const IMAGE_COUNT = 20;
   const IMAGE_EXT = 'jpg';        // change to 'png' here if your images are PNGs
-  const TARGET_BMI = 22;          // soft "healthy midpoint" the model drifts toward/away from
-  const MAX_WEEKLY_KG = 0.5;      // hard safety cap: never simulate faster than a commonly cited safe pace
-  const RATE_K = 0.06;            // tuning constant for weekly drift
+  const TARGET_BMI = 22;          // general "healthy midpoint" reference (roughly the center of the commonly-cited 18.5-25 healthy BMI band)
+  const MAX_WEEKLY_KG = 0.5;      // hard safety cap: never simulate faster than the commonly cited safe pace for intentional weight change (~0.5-1 kg/week)
+  const HOMEOSTATIC_RATE_K = 0.03; // gentle secondary pull toward the healthy midpoint, mainly there to keep extreme starting points bounded/plausible
 
   const FACTOR_INFO = {
     steps: { title: 'Daily steps', text: 'More daily walking supports calorie balance and heart health. Around 8,000\u201310,000 steps a day is a commonly used target, but any increase over your current habit helps.' },
@@ -200,21 +200,27 @@
     return minKey;
   }
 
-  // Simulates weight week by week as a gentle pull toward (good habits) or
-  // away from (poor habits) a healthy BMI midpoint. Deliberately simplified
-  // and bounded — not a clinical model.
+  // Simulates weight week by week. The primary driver is sustained habit
+  // quality — a rough stand-in for calorie balance, since that's what
+  // actually drives weight change over weeks, regardless of where someone
+  // is starting from. A gentler secondary term nudges things toward a
+  // healthy BMI midpoint, mainly to keep extreme starting points bounded
+  // and plausible rather than drifting indefinitely. Both are capped at
+  // MAX_WEEKLY_KG, a commonly cited safe pace. Deliberately simplified and
+  // bounded — not a clinical model.
   function simulateWeeks(s) {
     const scores = computeScores(s);
-    const quality = (overallScore(scores) - 50) / 50; // -1 .. 1
+    const quality = (overallScore(scores) - 50) / 50; // -1 (poor habits) .. 1 (excellent habits)
     const disciplineFactor = s.discipline / 100;
 
     let simWeight = s.weightKg;
     const results = { 0: simWeight };
     for (let week = 1; week <= 12; week++) {
       const bmiNow = calcBMI(simWeight, s.heightCm);
+      const habitDrive = -quality * disciplineFactor * MAX_WEEKLY_KG;
       const gap = clamp(bmiNow - TARGET_BMI, -8, 8);
-      let delta = -gap * RATE_K * quality * disciplineFactor;
-      delta = clamp(delta, -MAX_WEEKLY_KG, MAX_WEEKLY_KG);
+      const homeostaticPull = -gap * HOMEOSTATIC_RATE_K;
+      let delta = clamp(habitDrive + homeostaticPull, -MAX_WEEKLY_KG, MAX_WEEKLY_KG);
       simWeight = Math.max(35, simWeight + delta);
       if (WEEKS.includes(week)) results[week] = simWeight;
     }
@@ -337,11 +343,32 @@
   ------------------------------------------------------------------ */
   dom.heightRange.addEventListener('input', () => { state.heightCm = Number(dom.heightRange.value); syncPair(dom.heightRange, dom.heightInput, state.heightCm); render(); });
   dom.heightInput.addEventListener('input', () => {
+    // Don't rewrite the field's own value while the person is still typing —
+    // doing so on every keystroke was stomping on digits as soon as an
+    // in-progress number (e.g. the "1" in "165") fell outside the min/max,
+    // making it impossible to type a new value at all. Live-update the
+    // slider + preview, but only clamp and resync the text field on blur.
+    if (dom.heightInput.value === '') return;
+    const raw = Number(dom.heightInput.value);
+    if (Number.isNaN(raw)) return;
+    state.heightCm = clamp(raw, 120, 220);
+    dom.heightRange.value = state.heightCm;
+    render();
+  });
+  dom.heightInput.addEventListener('blur', () => {
     const v = clamp(Number(dom.heightInput.value) || DEFAULTS.heightCm, 120, 220);
     state.heightCm = v; syncPair(dom.heightRange, dom.heightInput, v); render();
   });
   dom.weightRange.addEventListener('input', () => { state.weightKg = Number(dom.weightRange.value); syncPair(dom.weightRange, dom.weightInput, state.weightKg); render(); });
   dom.weightInput.addEventListener('input', () => {
+    if (dom.weightInput.value === '') return;
+    const raw = Number(dom.weightInput.value);
+    if (Number.isNaN(raw)) return;
+    state.weightKg = clamp(raw, 35, 180);
+    dom.weightRange.value = state.weightKg;
+    render();
+  });
+  dom.weightInput.addEventListener('blur', () => {
     const v = clamp(Number(dom.weightInput.value) || DEFAULTS.weightKg, 35, 180);
     state.weightKg = v; syncPair(dom.weightRange, dom.weightInput, v); render();
   });
