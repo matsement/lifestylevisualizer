@@ -359,6 +359,16 @@ input[type="range"]::-moz-range-track {
 }
 .viewport-head h2 { font-size: 1.2rem; }
 
+.btn-label-short { display: none; }
+
+@media (max-width: 600px) {
+  .viewport-head { flex-wrap: nowrap; gap: 8px; margin-bottom: 14px; }
+  .viewport-head h2 { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #compareToggleBtn { padding: 8px 12px; font-size: 0.78rem; white-space: nowrap; flex-shrink: 0; }
+  .btn-label-full { display: none; }
+  .btn-label-short { display: inline; }
+}
+
 /* Avatar stage */
 .stage-wrap { position: relative; margin-top: 22px; }
 
@@ -484,7 +494,7 @@ input[type="range"]::-moz-range-track {
 .timeline-labels span.is-active { color: var(--accent-strong); font-weight: 700; }
 #weekScrubber { accent-color: var(--accent); }
 
-/* BMI card */
+/* BMI card (collapsible) */
 .bmi-card {
   margin-top: 26px;
   padding: 16px 18px;
@@ -492,11 +502,20 @@ input[type="range"]::-moz-range-track {
   background: var(--surface-2);
   border-left: 4px solid var(--accent-cool);
 }
-.bmi-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85rem; font-weight: 600; }
+.bmi-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 0.85rem; font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  gap: 10px;
+}
+.bmi-head::-webkit-details-marker { display: none; }
+.bmi-hint { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
+.bmi-card[open] .bmi-hint { display: none; }
 .bmi-value { font-family: var(--font-mono); font-size: 1rem; color: var(--accent-strong); }
+.bmi-body { margin-top: 12px; }
 .bmi-bar-track {
   position: relative;
-  margin-top: 12px;
   height: 16px;
   border-radius: 999px;
   background: linear-gradient(
