@@ -52,7 +52,12 @@
     sleepHours: 7,
     stressLevel: 'medium',
     alcoholDrinks: 2,
-    discipline: 50
+    discipline: 50,
+    // True once the person has interacted with any lifestyle/habit input.
+    // Until then, those sliders just hold arbitrary placeholder values, so
+    // the snapshot shouldn't present a confident-sounding 12-week trend
+    // based on them.
+    habitsTouched: false
   };
 
   const STORAGE_KEY = 'lv-state-v1';
@@ -92,6 +97,7 @@
 
     simContent: $('simContent'),
     compareToggleBtn: $('compareToggleBtn'),
+    compareToggleBtnFull: $('compareToggleBtnFull'), compareToggleBtnShort: $('compareToggleBtnShort'),
 
     avatarStage: $('avatarStage'),
     avatarImgBase: $('avatarImgBase'), avatarImgBlend: $('avatarImgBlend'),
@@ -239,7 +245,7 @@
 
   function imagePath(set, index) {
     const n = String(clamp(Math.round(index), 1, IMAGE_COUNT)).padStart(2, '0');
-    return `images/${set}/${set}_${n}.${IMAGE_EXT}`;
+    return `images/${set}_${n}.${IMAGE_EXT}`;
   }
 
   function formatLiters(v) { return `${Number(v).toFixed(2).replace(/\.?0+$/, '')} L`; }
@@ -289,6 +295,12 @@
   }
 
   function renderInsight(s, sim) {
+    if (!s.habitsTouched) {
+      dom.insightSummary.textContent = 'Fill in your habits below and this will turn into a personalized 12-week trend.';
+      dom.insightTip.textContent = '';
+      return;
+    }
+
     const week12Weight = sim.results[12];
     const week12Bmi = calcBMI(week12Weight, s.heightCm);
     const week12Cat = bmiCategory(week12Bmi);
@@ -407,16 +419,28 @@
   dom.alcoholRange.addEventListener('input', () => { state.alcoholDrinks = Number(dom.alcoholRange.value); dom.alcoholValue.textContent = state.alcoholDrinks; render(); });
   dom.disciplineRange.addEventListener('input', () => { state.discipline = Number(dom.disciplineRange.value); dom.disciplineValue.textContent = `${state.discipline}%`; render(); });
 
+  // Any interaction with a lifestyle/habit input counts as "filling in a
+  // scenario" -- from that point on the snapshot can speak with confidence.
+  document.querySelectorAll('[data-track="lifestyle"]').forEach((el) => {
+    el.addEventListener('input', () => { state.habitsTouched = true; });
+    el.addEventListener('change', () => { state.habitsTouched = true; });
+  });
+
   /* ------------------------------------------------------------------
      Timeline & compare
   ------------------------------------------------------------------ */
   dom.weekScrubber.addEventListener('input', () => { currentWeekIndex = Number(dom.weekScrubber.value); render(); });
 
+  function setCompareButtonLabel(isCompareMode) {
+    dom.compareToggleBtnFull.textContent = isCompareMode ? 'Back to single view' : 'Compare now vs. later';
+    dom.compareToggleBtnShort.textContent = isCompareMode ? 'Back' : 'Compare';
+  }
+
   dom.compareToggleBtn.addEventListener('click', () => {
     compareMode = !compareMode;
     dom.compareStage.hidden = !compareMode;
     dom.avatarStage.hidden = compareMode;
-    dom.compareToggleBtn.textContent = compareMode ? 'Back to single view' : 'Compare now vs. later';
+    setCompareButtonLabel(compareMode);
     render();
   });
 
@@ -503,7 +527,7 @@
     compareMode = false;
     dom.compareStage.hidden = true;
     dom.avatarStage.hidden = false;
-    dom.compareToggleBtn.textContent = 'Compare now vs. later';
+    setCompareButtonLabel(false);
     applyStateToInputs();
     render();
   });
@@ -520,6 +544,7 @@
     state.stressLevel = ['low', 'medium', 'high'][Math.floor(Math.random() * 3)];
     state.alcoholDrinks = Math.round(Math.random() * 16);
     state.discipline = Math.round((Math.random() * 100) / 5) * 5;
+    state.habitsTouched = true;
     applyStateToInputs();
     render();
   });
@@ -563,6 +588,7 @@
     loadState();
     applyStateToInputs();
     buildLearnMore();
+    setCompareButtonLabel(false);
 
     render();
   }
