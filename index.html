@@ -35,9 +35,8 @@
 
 <main class="layout">
 
-  <!-- CONTROL PANEL -->
-  <section class="control-panel" aria-label="Your inputs">
-
+  <!-- YOUR BASICS -->
+  <section class="you-block" aria-label="Your basics">
     <div class="card" data-card="you">
       <h2 class="card-title">01 &middot; You</h2>
 
@@ -75,6 +74,86 @@
         </select>
       </div>
     </div>
+  </section>
+
+  <!-- SIMULATION VIEWPORT -->
+  <section class="viewport-panel" aria-label="Simulation viewport">
+
+    <div class="sim-content" id="simContent">
+
+      <div class="viewport-head">
+        <h2 id="viewportGreeting">Your simulation</h2>
+        <button type="button" id="compareToggleBtn" class="btn btn-outline">Compare now vs. later</button>
+      </div>
+
+      <div class="bmi-card">
+        <div class="bmi-head">
+          <span>BMI on the general scale</span>
+          <span class="bmi-value" id="bmiValue">&mdash;</span>
+        </div>
+        <div class="bmi-bar-track" id="bmiBarTrack">
+          <div class="bmi-marker" id="bmiMarker"></div>
+        </div>
+        <div class="bmi-scale-labels">
+          <span>Underweight</span>
+          <span>Healthy range</span>
+          <span>Overweight</span>
+          <span>Obese range</span>
+        </div>
+        <p class="bmi-footnote">BMI is only a weight-to-height ratio. It doesn't measure muscle, fat distribution or overall health &mdash; treat it as one rough reference point, not a verdict.</p>
+      </div>
+
+      <div class="stage-wrap">
+        <div class="avatar-stage" id="avatarStage">
+          <div class="scanlines" aria-hidden="true"></div>
+          <img id="avatarImgBase" class="avatar-img" alt="" aria-hidden="true">
+          <img id="avatarImgBlend" class="avatar-img avatar-img-blend" alt="" aria-hidden="true">
+          <div class="avatar-fallback" id="avatarFallback" hidden>
+            <svg viewBox="0 0 120 220" class="fallback-silhouette" aria-hidden="true">
+              <ellipse cx="60" cy="30" rx="22" ry="26"/>
+              <path d="M60 56 C25 56 15 90 15 130 L15 200 C15 210 25 216 35 216 L85 216 C95 216 105 210 105 200 L105 130 C105 90 95 56 60 56 Z"/>
+            </svg>
+            <p><strong>Add your image</strong><br><span id="fallbackFilename">female_10.jpg</span><br>to <code>/images/</code></p>
+          </div>
+          <div class="hud-readout" id="hudReadout" aria-hidden="true"></div>
+        </div>
+
+        <div class="compare-stage" id="compareStage" hidden>
+          <div class="compare-image compare-before">
+            <img id="compareBeforeImg" alt="Your body at week 0">
+          </div>
+          <div class="compare-image compare-after" id="compareAfterClip">
+            <img id="compareAfterImg" alt="Your simulated body at a future week">
+          </div>
+          <div class="compare-handle" id="compareHandle" tabindex="0" role="slider" aria-label="Drag to compare" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
+          <span class="compare-label compare-label-left">Now</span>
+          <span class="compare-label compare-label-right">Week <span id="compareWeekLabel">12</span></span>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-labels">
+          <span data-week-label="0">Now</span>
+          <span data-week-label="4">Week 4</span>
+          <span data-week-label="8">Week 8</span>
+          <span data-week-label="12">Week 12</span>
+        </div>
+        <input type="range" id="weekScrubber" min="0" max="3" step="1" value="0" aria-label="Simulated week">
+      </div>
+
+      <div class="insight-card">
+        <h3 id="insightGreeting">Your snapshot</h3>
+        <p id="insightSummary"></p>
+        <p id="insightTip" class="insight-tip"></p>
+      </div>
+
+      <p class="habits-nudge">Want to see how this could play out over 12 weeks? Fill in your habits below to bring the simulation to life.</p>
+
+    </div>
+  </section>
+
+  <!-- MORE HABITS -->
+  <section class="more-habits" aria-label="More habits">
 
     <div class="card" data-card="movement">
       <h2 class="card-title">02 &middot; Movement</h2>
@@ -169,82 +248,6 @@
       <div class="learn-more-body" id="learnMoreBody"><!-- populated by script.js --></div>
     </details>
 
-  </section>
-
-  <!-- SIMULATION VIEWPORT -->
-  <section class="viewport-panel" aria-label="Simulation viewport">
-
-    <div class="sim-content" id="simContent">
-
-      <div class="viewport-head">
-        <h2 id="viewportGreeting">Your simulation</h2>
-        <button type="button" id="compareToggleBtn" class="btn btn-outline">Compare now vs. later</button>
-      </div>
-
-      <div class="bmi-card">
-        <div class="bmi-head">
-          <span>BMI on the general scale</span>
-          <span class="bmi-value" id="bmiValue">&mdash;</span>
-        </div>
-        <div class="bmi-bar-track" id="bmiBarTrack">
-          <div class="bmi-marker" id="bmiMarker"></div>
-        </div>
-        <div class="bmi-scale-labels">
-          <span>Underweight</span>
-          <span>Healthy range</span>
-          <span>Overweight</span>
-          <span>Obese range</span>
-        </div>
-        <p class="bmi-footnote">BMI is only a weight-to-height ratio. It doesn't measure muscle, fat distribution or overall health &mdash; treat it as one rough reference point, not a verdict.</p>
-      </div>
-
-      <div class="stage-wrap">
-        <div class="avatar-stage" id="avatarStage">
-          <div class="scanlines" aria-hidden="true"></div>
-          <img id="avatarImgBase" class="avatar-img" alt="" aria-hidden="true">
-          <img id="avatarImgBlend" class="avatar-img avatar-img-blend" alt="" aria-hidden="true">
-          <div class="avatar-fallback" id="avatarFallback" hidden>
-            <svg viewBox="0 0 120 220" class="fallback-silhouette" aria-hidden="true">
-              <ellipse cx="60" cy="30" rx="22" ry="26"/>
-              <path d="M60 56 C25 56 15 90 15 130 L15 200 C15 210 25 216 35 216 L85 216 C95 216 105 210 105 200 L105 130 C105 90 95 56 60 56 Z"/>
-            </svg>
-            <p><strong>Add your image</strong><br><span id="fallbackFilename">female_10.jpg</span><br>to <code>/images/</code></p>
-          </div>
-          <div class="hud-readout" id="hudReadout" aria-hidden="true"></div>
-        </div>
-
-        <div class="compare-stage" id="compareStage" hidden>
-          <div class="compare-image compare-before">
-            <img id="compareBeforeImg" alt="Your body at week 0">
-          </div>
-          <div class="compare-image compare-after" id="compareAfterClip">
-            <img id="compareAfterImg" alt="Your simulated body at a future week">
-          </div>
-          <div class="compare-handle" id="compareHandle" tabindex="0" role="slider" aria-label="Drag to compare" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
-          <span class="compare-label compare-label-left">Now</span>
-          <span class="compare-label compare-label-right">Week <span id="compareWeekLabel">12</span></span>
-        </div>
-      </div>
-
-      <div class="timeline">
-        <div class="timeline-labels">
-          <span data-week-label="0">Now</span>
-          <span data-week-label="4">Week 4</span>
-          <span data-week-label="8">Week 8</span>
-          <span data-week-label="12">Week 12</span>
-        </div>
-        <input type="range" id="weekScrubber" min="0" max="3" step="1" value="0" aria-label="Simulated week">
-      </div>
-
-      <div class="insight-card">
-        <h3 id="insightGreeting">Your snapshot</h3>
-        <p id="insightSummary"></p>
-        <p id="insightTip" class="insight-tip"></p>
-      </div>
-
-      <p class="habits-nudge">Want to see how this could play out over 12 weeks? Fill in your habits below to bring the simulation to life.</p>
-
-    </div>
   </section>
 
 </main>
